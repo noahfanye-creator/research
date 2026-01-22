@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Download, FileText, ChevronRight, ArrowLeft, PenTool, AlertCircle, CheckCircle2, Printer } from 'lucide-react';
+import { Sparkles, Download, FileText, ChevronRight, ArrowLeft, PenTool, AlertCircle, CheckCircle2, Printer, HelpCircle, X } from 'lucide-react';
 import { ReportData } from './types';
 import { extractReportFromText } from './services/geminiService';
 import ProfessionalReport from './components/ProfessionalReport';
@@ -11,6 +11,7 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showHelp, setShowHelp] = useState(false);
   
   // Diagnostic state
   const [keyStatus, setKeyStatus] = useState<'checking' | 'present' | 'missing'>('checking');
@@ -213,12 +214,15 @@ const App: React.FC = () => {
           </div>
         )}
 
-        <div className="mt-8 flex justify-center">
-            <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium border ${
-                keyStatus === 'present' 
-                    ? 'bg-green-50 text-green-700 border-green-200' 
-                    : 'bg-amber-50 text-amber-700 border-amber-200'
-            }`}>
+        <div className="mt-8 flex flex-col items-center gap-3">
+            <div 
+                className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium border cursor-pointer transition-colors ${
+                    keyStatus === 'present' 
+                        ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100' 
+                        : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+                }`}
+                onClick={() => keyStatus === 'missing' && setShowHelp(true)}
+            >
                 {keyStatus === 'present' ? (
                     <>
                         <CheckCircle2 className="w-3 h-3" />
@@ -227,10 +231,52 @@ const App: React.FC = () => {
                 ) : (
                     <>
                         <AlertCircle className="w-3 h-3" />
-                        API Key Missing (Check Netlify Env: VITE_API_KEY)
+                        API Key Missing (Check Environment Variables)
+                        <HelpCircle className="w-3 h-3 ml-1" />
                     </>
                 )}
             </div>
+            
+            {showHelp && (
+                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in">
+                    <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl relative">
+                        <button onClick={() => setShowHelp(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-900">
+                            <X className="w-5 h-5" />
+                        </button>
+                        <h3 className="text-lg font-bold text-slate-900 mb-3 flex items-center gap-2">
+                           <AlertCircle className="w-5 h-5 text-amber-500" /> 如何配置 API Key?
+                        </h3>
+                        <div className="text-sm text-slate-600 space-y-3 leading-relaxed">
+                            <p>检测不到 API Key，请根据您的部署平台进行设置：</p>
+                            
+                            <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                <p className="font-bold text-slate-800 mb-1">腾讯云 EdgeOne / Webify:</p>
+                                <ol className="list-decimal pl-4 space-y-1 text-xs">
+                                    <li>进入 <strong>Project (项目)</strong> 页面 (不要在全局设置里)</li>
+                                    <li>点击 <strong>Settings (设置)</strong> 标签</li>
+                                    <li>找到 <strong>Environment Variables (环境变量)</strong></li>
+                                    <li>添加键: <code className="bg-white px-1 border rounded">VITE_API_KEY</code></li>
+                                    <li>添加值: 您的 Gemini API Key</li>
+                                    <li><strong className="text-amber-600">重要: 点击 Redeploy (重新部署) 才会生效</strong></li>
+                                </ol>
+                            </div>
+
+                            <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                <p className="font-bold text-slate-800 mb-1">Vercel / Netlify:</p>
+                                <p className="text-xs">
+                                    进入 Project Settings &gt; Environment Variables，添加 <code className="bg-white px-1 border rounded">VITE_API_KEY</code> 并重新部署。
+                                </p>
+                            </div>
+                        </div>
+                        <button 
+                            onClick={() => setShowHelp(false)}
+                            className="w-full mt-5 bg-slate-900 text-white py-2 rounded-lg font-bold hover:bg-black"
+                        >
+                            我已设置，关闭提示
+                        </button>
+                    </div>
+                 </div>
+            )}
         </div>
       </div>
     </div>

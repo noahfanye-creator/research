@@ -34,7 +34,7 @@ export const extractReportFromText = async (text: string): Promise<ReportData> =
   console.log("Gemini Service: Key Status:", apiKey ? "Present (Starts with " + apiKey.substring(0, 4) + ")" : "Missing");
 
   if (!apiKey || apiKey.trim() === '') {
-    throw new Error("API Key 未检测到。请在 Netlify 环境变量中设置 'VITE_API_KEY'。");
+    throw new Error("API Key 未检测到。请在腾讯云/部署平台的环境变量中设置 'VITE_API_KEY'。");
   }
 
   const ai = new GoogleGenAI({ apiKey: apiKey });
