@@ -8,14 +8,17 @@ export interface ReportData {
     currentPrice: string;
     date: string;
     analyst: string;
+    priceTrend: number[]; // Array of 7 numbers representing the 7-day trend
   };
   content: {
     headline: string;
-    summary: string;
-    investmentThesis: string;
+    // Changed from fixed fields to dynamic sections to preserve user content structure
+    sections: {
+      title: string;
+      body: string;
+    }[];
     keyRisks: string;
-    valuation: string;
-    conclusion: string; // New field for the final emphasized verdict
+    conclusion: string;
   };
   keyMetrics: {
     label: string;

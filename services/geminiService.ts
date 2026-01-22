@@ -41,7 +41,7 @@ export const extractReportFromText = async (text: string): Promise<ReportData> =
   
   // Update prompt to enforce Chinese content with English headers/terminology
   const prompt = `
-    You are a Senior Equity Research Editor at a top-tier global investment bank (like Goldman Sachs, UBS, or Morgan Stanley). 
+    You are a Senior Equity Research Editor at a top-tier global investment bank. 
     Your task is to take the provided unstructured user notes and format them into a professional Institutional Equity Research Report JSON.
 
     User Notes:
@@ -50,19 +50,14 @@ export const extractReportFromText = async (text: string): Promise<ReportData> =
     """
 
     **CRITICAL INSTRUCTIONS:**
-    1. **COMPREHENSIVE COVERAGE**: Do NOT summarize to the point of losing details. Include ALL relevant data points, logic flows, and qualitative assessments from the user notes.
-    2. **Language**: Write the main analysis in **Professional Chinese (Mandarin)**.
-    3. **Terminology**: Use English for financial metrics (e.g., "CAGR", "EBITDA", "RSI", "PE Ratio").
-    4. **Formatting**: Use Markdown bold (**text**) to highlight key figures and strong judgments.
-    5. **Structure Logic**:
-       - **Headline**: Catchy Chinese headline.
-       - **Summary**: A detailed overview.
-       - **Investment Thesis**: The core detailed argument.
-       - **Valuation**: Technical or Fundamental justification.
-       - **Conclusion (Vital)**: Extract the final recommendation, action plan, or closing thought. Make it punchy and decisive.
+    1. **Dynamic Structure**: Do NOT force the content into fixed "Summary/Thesis/Valuation" buckets if they don't fit. Instead, create a list of **sections** based on the topics found in the User Notes.
+    2. **Content Preservation**: Retain ALL details, numbers, and logic from the user notes. Do not summarize to the point of data loss.
+    3. **Language**: Write the main analysis in **Professional Chinese (Mandarin)**.
+    4. **Terminology**: Use English for financial metrics (e.g., "CAGR", "EBITDA").
+    5. **Price Trend**: Estimate or simulate a 7-day closing price array (length 7) based on the sentiment. If the note says "surged", the numbers should go up. If "crashed", down. If neutral or unknown, use a realistic random walk around the current price.
+    6. **Key Metrics**: Extract at least 4-5 key financial figures.
 
-    Instructions:
-    Generate the JSON content based on the notes.
+    Generate the JSON content.
   `;
 
   try {
@@ -84,16 +79,28 @@ export const extractReportFromText = async (text: string): Promise<ReportData> =
                 targetPrice: { type: Type.STRING },
                 currentPrice: { type: Type.STRING },
                 date: { type: Type.STRING },
-                analyst: { type: Type.STRING }
+                analyst: { type: Type.STRING },
+                priceTrend: { 
+                    type: Type.ARRAY, 
+                    items: { type: Type.NUMBER },
+                    description: "Array of 7 numbers representing the last 7 days closing prices for a sparkline chart."
+                }
               }
             },
             content: {
               type: Type.OBJECT,
               properties: {
                 headline: { type: Type.STRING },
-                summary: { type: Type.STRING, description: "Detailed summary of the situation." },
-                investmentThesis: { type: Type.STRING, description: "Detailed analysis preserving user's logic." },
-                valuation: { type: Type.STRING, description: "Detailed valuation or technical analysis." },
+                sections: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      title: { type: Type.STRING, description: "Section header (e.g., 'Investment Summary', '2Q24 Review', 'Valuation')" },
+                      body: { type: Type.STRING, description: "The content of the section. Use Markdown bold for emphasis." }
+                    }
+                  }
+                },
                 keyRisks: { type: Type.STRING },
                 conclusion: { type: Type.STRING, description: "The final verdict, recommendation, or closing summary." }
               }
@@ -103,7 +110,7 @@ export const extractReportFromText = async (text: string): Promise<ReportData> =
               items: {
                 type: Type.OBJECT,
                 properties: {
-                  label: { type: Type.STRING, description: "Keep standard metric names in English (e.g. 'P/E (TTM)', 'EPS')" },
+                  label: { type: Type.STRING, description: "Metric name (e.g. 'P/E (TTM)')" },
                   value: { type: Type.STRING }
                 }
               }

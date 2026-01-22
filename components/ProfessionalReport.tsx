@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { ReportData } from '../types';
+import { LineChart, Line, ResponsiveContainer, YAxis } from 'recharts';
 
 interface Props {
   data: ReportData;
@@ -38,6 +39,31 @@ const RichText: React.FC<{ text: string; mode?: 'dark' | 'light' }> = ({ text, m
         return <span key={index}>{part}</span>;
       })}
     </span>
+  );
+};
+
+const MiniTrendChart: React.FC<{ data: number[] }> = ({ data }) => {
+  if (!data || data.length === 0) return null;
+  
+  const chartData = data.map((val, idx) => ({ i: idx, val }));
+  const isUp = data[data.length - 1] >= data[0];
+  const color = isUp ? '#10b981' : '#ef4444'; // Emerald-500 or Red-500
+
+  return (
+    <div className="h-12 w-full mt-2 opacity-80">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={chartData}>
+          <Line 
+            type="monotone" 
+            dataKey="val" 
+            stroke={color} 
+            strokeWidth={2} 
+            dot={false}
+          />
+          <YAxis domain={['dataMin', 'dataMax']} hide />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
   );
 };
 
@@ -132,40 +158,20 @@ const ProfessionalReport: React.FC<Props> = ({ data }) => {
           {/* LEFT: MAIN ANALYSIS - Using flex-col to distribute space */}
           <div className="w-[68%] flex flex-col gap-3 min-h-0">
             
-            {/* 1. Summary */}
-            <div className="shrink-0">
-              <h3 className="text-[10px] font-bold text-slate-900 uppercase border-b border-slate-300 pb-0.5 mb-1.5 font-sans tracking-wider flex items-center gap-2">
-                <span className="w-0.5 h-2.5 bg-slate-900 inline-block"></span>
-                投资摘要 Investment Summary
-              </h3>
-              <p className="text-[9.2pt] text-slate-800 leading-[1.45] text-justify font-serif">
-                <RichText text={data.content.summary} />
-              </p>
-            </div>
+            {/* Dynamic Sections */}
+            {data.content.sections.map((section, idx) => (
+              <div key={idx} className="shrink-0">
+                <h3 className="text-[10px] font-bold text-slate-900 uppercase border-b border-slate-300 pb-0.5 mb-1.5 font-sans tracking-wider flex items-center gap-2">
+                  <span className="w-0.5 h-2.5 bg-slate-900 inline-block"></span>
+                  {section.title}
+                </h3>
+                <p className="text-[9.2pt] text-slate-800 leading-[1.45] text-justify font-serif whitespace-pre-wrap">
+                  <RichText text={section.body} />
+                </p>
+              </div>
+            ))}
 
-            {/* 2. Thesis */}
-            <div className="shrink-0">
-              <h3 className="text-[10px] font-bold text-slate-900 uppercase border-b border-slate-300 pb-0.5 mb-1.5 font-sans tracking-wider flex items-center gap-2">
-                 <span className="w-0.5 h-2.5 bg-slate-900 inline-block"></span>
-                 核心逻辑 Investment Thesis
-              </h3>
-              <p className="text-[9.2pt] text-slate-800 leading-[1.45] text-justify font-serif whitespace-pre-wrap">
-                <RichText text={data.content.investmentThesis} />
-              </p>
-            </div>
-
-            {/* 3. Valuation */}
-            <div className="shrink-0">
-              <h3 className="text-[10px] font-bold text-slate-900 uppercase border-b border-slate-300 pb-0.5 mb-1.5 font-sans tracking-wider flex items-center gap-2">
-                 <span className="w-0.5 h-2.5 bg-slate-900 inline-block"></span>
-                 估值与技术分析 Valuation & Technicals
-              </h3>
-              <p className="text-[9.2pt] text-slate-800 leading-[1.45] text-justify font-serif whitespace-pre-wrap">
-                <RichText text={data.content.valuation} />
-              </p>
-            </div>
-
-             {/* 4. THE VERDICT - Pushed to bottom of this column */}
+             {/* THE VERDICT - Pushed to bottom of this column */}
             <div className="mt-auto pt-2 shrink-0">
                 <div className="bg-slate-900 text-slate-100 p-4 rounded-sm shadow-md border-l-4 border-indigo-500 relative overflow-hidden">
                      <div className="absolute top-0 right-0 -mt-2 -mr-2 text-slate-800 opacity-20 transform rotate-12">
@@ -186,7 +192,7 @@ const ProfessionalReport: React.FC<Props> = ({ data }) => {
           {/* RIGHT: SIDEBAR DATA */}
           <div className="w-[32%] flex flex-col gap-4 pt-0 min-h-0">
             
-            {/* Key Metrics */}
+            {/* Key Metrics & Chart */}
             <div className="bg-slate-50 p-3 border-t-2 border-slate-900 shadow-sm shrink-0">
                <h4 className="text-[9px] font-bold text-slate-500 uppercase mb-2 font-sans tracking-widest flex justify-between">
                  <span>关键指标 Key Metrics</span>
@@ -202,6 +208,17 @@ const ProfessionalReport: React.FC<Props> = ({ data }) => {
                    </div>
                  ))}
                </div>
+               
+               {/* Mini 7-Day Trend Chart */}
+               {data.meta.priceTrend && data.meta.priceTrend.length > 0 && (
+                 <div className="mt-3 pt-2 border-t border-slate-200">
+                    <div className="flex justify-between items-center text-[8px] text-slate-400 font-sans mb-1">
+                      <span>7-DAY PRICE ACTION</span>
+                      <span>TREND CHECK</span>
+                    </div>
+                    <MiniTrendChart data={data.meta.priceTrend} />
+                 </div>
+               )}
             </div>
 
             {/* Risks */}
