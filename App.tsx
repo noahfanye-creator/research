@@ -50,6 +50,9 @@ const App: React.FC = () => {
 
   const handleDownloadPDF = async () => {
     setDownloading(true);
+    // Ensure we are at the top to prevent offset bugs in html2canvas
+    window.scrollTo(0, 0);
+    
     const element = document.getElementById('report-content');
     if (!element || !(window as any).html2pdf) {
       setDownloading(false);
@@ -57,10 +60,11 @@ const App: React.FC = () => {
     }
 
     const opt = {
-      margin: 0,
+      margin: 0, // We handle margins inside the component with CSS
       filename: `IntelliQuant_Research_${reportData?.meta.ticker || 'Report'}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, logging: false },
+      // scrollY: 0 is CRITICAL to fix the blank page/offset issue
+      html2canvas: { scale: 2, useCORS: true, logging: false, scrollY: 0 },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
@@ -126,7 +130,7 @@ const App: React.FC = () => {
         </div>
 
         {/* The Report Workspace */}
-        <div className="py-8 overflow-y-auto">
+        <div className="py-8 overflow-y-auto flex justify-center">
           <ProfessionalReport data={reportData} />
         </div>
       </div>
