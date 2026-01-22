@@ -49,19 +49,20 @@ export const extractReportFromText = async (text: string): Promise<ReportData> =
     ${text}
     """
 
-    **CRITICAL STYLE INSTRUCTIONS (High-End Bilingual Style):**
-    1. **Language**: Write the main analysis (Summary, Thesis, Valuation, Risks) in **Professional Chinese (Mandarin)**.
-    2. **Terminology**: Use English for specific financial metrics (e.g., "CAGR", "EBITDA", "RSI", "PE Ratio") and proper nouns where appropriate to create a "premium global" feel.
-    3. **Tone**: Objective, sophisticated, institutional. Avoid casual language.
-    4. **Content Logic**:
-       - **Headline**: Catchy Chinese headline summarizing the core view.
-       - **Investment Thesis**: Why buy/sell now? What is the market missing? (Write in Chinese).
-       - **Valuation**: Justify the price target using multiples or technicals (Write in Chinese).
-       - **Risks**: What could go wrong? (Write in Chinese).
+    **CRITICAL INSTRUCTIONS:**
+    1. **COMPREHENSIVE COVERAGE**: Do NOT summarize to the point of losing details. Include ALL relevant data points, logic flows, and qualitative assessments from the user notes.
+    2. **Language**: Write the main analysis in **Professional Chinese (Mandarin)**.
+    3. **Terminology**: Use English for financial metrics (e.g., "CAGR", "EBITDA", "RSI", "PE Ratio").
+    4. **Formatting**: Use Markdown bold (**text**) to highlight key figures and strong judgments.
+    5. **Structure Logic**:
+       - **Headline**: Catchy Chinese headline.
+       - **Summary**: A detailed overview.
+       - **Investment Thesis**: The core detailed argument.
+       - **Valuation**: Technical or Fundamental justification.
+       - **Conclusion (Vital)**: Extract the final recommendation, action plan, or closing thought. Make it punchy and decisive.
 
     Instructions:
-    1. Extract company name, ticker, rating (BUY/SELL/HOLD), and prices.
-    2. Generate the JSON content based on the notes.
+    Generate the JSON content based on the notes.
   `;
 
   try {
@@ -90,10 +91,11 @@ export const extractReportFromText = async (text: string): Promise<ReportData> =
               type: Type.OBJECT,
               properties: {
                 headline: { type: Type.STRING },
-                summary: { type: Type.STRING },
-                investmentThesis: { type: Type.STRING },
+                summary: { type: Type.STRING, description: "Detailed summary of the situation." },
+                investmentThesis: { type: Type.STRING, description: "Detailed analysis preserving user's logic." },
+                valuation: { type: Type.STRING, description: "Detailed valuation or technical analysis." },
                 keyRisks: { type: Type.STRING },
-                valuation: { type: Type.STRING }
+                conclusion: { type: Type.STRING, description: "The final verdict, recommendation, or closing summary." }
               }
             },
             keyMetrics: {

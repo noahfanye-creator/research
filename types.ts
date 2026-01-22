@@ -15,6 +15,7 @@ export interface ReportData {
     investmentThesis: string;
     keyRisks: string;
     valuation: string;
+    conclusion: string; // New field for the final emphasized verdict
   };
   keyMetrics: {
     label: string;
