@@ -3,16 +3,17 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 
-// Polyfill for process in browser environments to prevent crashes
-// when accessing process.env.API_KEY
-if (typeof window !== 'undefined' && !(window as any).process) {
-  (window as any).process = {
-    env: {
-      // Allow the app to load; the actual key will be injected by the build system
-      // or remain empty if not configured, preventing the white screen crash.
-      API_KEY: '' 
-    }
-  };
+// Polyfill for process in browser environments.
+// We capture the VITE_API_KEY injected by the build system and assign it 
+// to process.env.API_KEY so the geminiService can use it.
+const builtInKey = import.meta.env?.VITE_API_KEY || '';
+
+if (typeof window !== 'undefined') {
+  if (!(window as any).process) {
+    (window as any).process = { env: {} };
+  }
+  // Assign the key found in the build environment
+  (window as any).process.env.API_KEY = builtInKey;
 }
 
 const rootElement = document.getElementById('root');

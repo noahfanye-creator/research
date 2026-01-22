@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Sparkles, Download, FileText, ChevronRight, ArrowLeft, PenTool } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Sparkles, Download, FileText, ChevronRight, ArrowLeft, PenTool, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { ReportData } from './types';
 import { extractReportFromText } from './services/geminiService';
 import ProfessionalReport from './components/ProfessionalReport';
@@ -11,6 +11,26 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Diagnostic state
+  const [keyStatus, setKeyStatus] = useState<'checking' | 'present' | 'missing'>('checking');
+
+  useEffect(() => {
+    // Simple check to see if we can access the key (without revealing it)
+    const checkKey = () => {
+        let hasKey = false;
+        try {
+            // @ts-ignore
+            if (import.meta.env?.VITE_API_KEY) hasKey = true;
+            // @ts-ignore
+            else if (typeof process !== 'undefined' && process.env?.API_KEY) hasKey = true;
+            // @ts-ignore
+            else if (window.process?.env?.API_KEY) hasKey = true;
+        } catch(e) {}
+        setKeyStatus(hasKey ? 'present' : 'missing');
+    };
+    checkKey();
+  }, []);
 
   const handleGenerate = async () => {
     if (!input.trim()) return;
@@ -19,8 +39,10 @@ const App: React.FC = () => {
     try {
       const data = await extractReportFromText(input);
       setReportData(data);
-    } catch (err) {
-      setError("排版生成失败，请重试。");
+    } catch (err: any) {
+      // Show the specific error message from the service
+      console.error(err);
+      setError(err.message || "未知错误，请打开浏览器控制台(F12)查看详情。");
     } finally {
       setLoading(false);
     }
@@ -113,8 +135,8 @@ const App: React.FC = () => {
 
   // Otherwise, show the "Input Page"
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex items-center justify-center p-4 font-sans">
-      <div className="w-full max-w-3xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex items-center justify-center p-4 font-sans flex-col">
+      <div className="w-full max-w-3xl mx-auto flex-1 flex flex-col justify-center">
         <div className="text-center mb-10">
             <div className="inline-flex items-center justify-center w-20 h-20 bg-slate-900 text-white rounded-3xl mb-6 shadow-2xl shadow-slate-200 rotate-3 transition-transform hover:rotate-0">
               <Sparkles className="w-10 h-10" />
@@ -135,7 +157,7 @@ const App: React.FC = () => {
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="请在此输入内容..."
+            placeholder="请在此输入内容 (例如：NVIDIA股价今日上涨3%，原因是Blackwell芯片需求强劲...)"
             className="w-full h-64 p-8 text-slate-700 bg-white text-lg leading-relaxed resize-none outline-none font-medium placeholder:text-slate-300 rounded-2xl"
           />
           
@@ -146,8 +168,8 @@ const App: React.FC = () => {
               </div>
               <button
                 onClick={handleGenerate}
-                disabled={loading || !input.trim()}
-                className="bg-slate-900 text-white px-8 py-3 rounded-xl text-base font-bold hover:bg-black hover:scale-105 transition-all active:scale-95 disabled:opacity-50 disabled:scale-100 flex items-center gap-2 shadow-lg shadow-slate-300/50"
+                disabled={loading || !input.trim() || keyStatus === 'missing'}
+                className="bg-slate-900 text-white px-8 py-3 rounded-xl text-base font-bold hover:bg-black hover:scale-105 transition-all active:scale-95 disabled:opacity-50 disabled:scale-100 flex items-center gap-2 shadow-lg shadow-slate-300/50 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <>
@@ -162,16 +184,29 @@ const App: React.FC = () => {
         </div>
         
         {error && (
-          <div className="mt-6 p-4 bg-red-50 text-red-600 text-sm font-bold rounded-xl text-center border border-red-100 animate-in fade-in slide-in-from-bottom-2">
+          <div className="mt-6 p-4 bg-red-50 text-red-600 text-sm font-bold rounded-xl text-center border border-red-100 animate-in fade-in slide-in-from-bottom-2 select-text">
             {error}
           </div>
         )}
 
-        <div className="mt-12 flex justify-center gap-8 opacity-40 grayscale hover:grayscale-0 transition-all duration-500">
-           {/* Decorative logos to imply style */}
-           <div className="h-6 w-20 bg-slate-300 rounded"></div>
-           <div className="h-6 w-20 bg-slate-300 rounded"></div>
-           <div className="h-6 w-20 bg-slate-300 rounded"></div>
+        <div className="mt-8 flex justify-center">
+            <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium border ${
+                keyStatus === 'present' 
+                    ? 'bg-green-50 text-green-700 border-green-200' 
+                    : 'bg-amber-50 text-amber-700 border-amber-200'
+            }`}>
+                {keyStatus === 'present' ? (
+                    <>
+                        <CheckCircle2 className="w-3 h-3" />
+                        System Ready (API Key Detected)
+                    </>
+                ) : (
+                    <>
+                        <AlertCircle className="w-3 h-3" />
+                        API Key Missing (Check Netlify Env: VITE_API_KEY)
+                    </>
+                )}
+            </div>
         </div>
       </div>
     </div>
