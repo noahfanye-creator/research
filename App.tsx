@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Download, FileText, ChevronRight, ArrowLeft, PenTool, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Sparkles, Download, FileText, ChevronRight, ArrowLeft, PenTool, AlertCircle, CheckCircle2, Printer } from 'lucide-react';
 import { ReportData } from './types';
 import { extractReportFromText } from './services/geminiService';
 import ProfessionalReport from './components/ProfessionalReport';
@@ -85,6 +85,10 @@ const App: React.FC = () => {
     }
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   const handleBack = () => {
     setReportData(null);
   };
@@ -118,26 +122,35 @@ const App: React.FC = () => {
              </span>
            </div>
 
-           <button 
-              onClick={handleDownloadPDF}
-              disabled={downloading}
-              className="bg-slate-900 text-white px-5 py-2 rounded-lg shadow-lg shadow-slate-300 text-sm font-bold flex items-center gap-2 hover:bg-black transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 disabled:cursor-wait"
-            >
-              {downloading ? (
-                <>
-                  <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  处理中...
-                </>
-              ) : (
-                <>
-                  <Download className="w-4 h-4" /> 下载 PDF
-                </>
-              )}
-            </button>
+           <div className="flex items-center gap-3">
+             <button 
+                onClick={handlePrint}
+                className="bg-white text-slate-700 border border-slate-200 px-5 py-2 rounded-lg shadow-sm text-sm font-bold flex items-center gap-2 hover:bg-slate-50 transition-all hover:-translate-y-0.5 active:translate-y-0"
+              >
+                <Printer className="w-4 h-4" /> 打印 / 另存为PDF
+              </button>
+
+             <button 
+                onClick={handleDownloadPDF}
+                disabled={downloading}
+                className="bg-slate-900 text-white px-5 py-2 rounded-lg shadow-lg shadow-slate-300 text-sm font-bold flex items-center gap-2 hover:bg-black transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 disabled:cursor-wait"
+              >
+                {downloading ? (
+                  <>
+                    <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    处理中...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4" /> 下载 PDF (图片版)
+                  </>
+                )}
+              </button>
+           </div>
         </div>
 
         {/* The Report Workspace */}
-        <div className="py-8 overflow-y-auto flex justify-center">
+        <div className="py-8 overflow-y-auto flex justify-center print:p-0 print:overflow-visible">
           <ProfessionalReport data={reportData} />
         </div>
       </div>
