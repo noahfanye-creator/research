@@ -25,6 +25,7 @@ const ProfessionalReport: React.FC<Props> = ({ data }) => {
         This ensures it looks exactly like a paper on screen and prints perfectly.
       */}
       <div 
+        id="report-content"
         className="bg-white shadow-2xl print:shadow-none relative box-border mx-auto flex flex-col"
         style={{ width: '210mm', minHeight: '297mm', padding: '15mm' }}
       >

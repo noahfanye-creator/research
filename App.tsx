@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Sparkles, Printer, FileText, ChevronRight, ArrowLeft, PenTool } from 'lucide-react';
+import { Sparkles, Download, FileText, ChevronRight, ArrowLeft, PenTool } from 'lucide-react';
 import { ReportData } from './types';
 import { extractReportFromText } from './services/geminiService';
 import ProfessionalReport from './components/ProfessionalReport';
@@ -9,6 +9,7 @@ const App: React.FC = () => {
   const [input, setInput] = useState('');
   const [reportData, setReportData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleGenerate = async () => {
@@ -25,8 +26,30 @@ const App: React.FC = () => {
     }
   };
 
-  const handlePrint = () => {
-    window.print();
+  const handleDownloadPDF = async () => {
+    setDownloading(true);
+    const element = document.getElementById('report-content');
+    if (!element || !(window as any).html2pdf) {
+      setDownloading(false);
+      return;
+    }
+
+    const opt = {
+      margin: 0,
+      filename: `IntelliQuant_Research_${reportData?.meta.ticker || 'Report'}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, logging: false },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    try {
+      await (window as any).html2pdf().set(opt).from(element).save();
+    } catch (e) {
+      console.error(e);
+      alert("PDF下载失败，请重试");
+    } finally {
+      setDownloading(false);
+    }
   };
 
   const handleBack = () => {
@@ -63,10 +86,20 @@ const App: React.FC = () => {
            </div>
 
            <button 
-              onClick={handlePrint}
-              className="bg-slate-900 text-white px-5 py-2 rounded-lg shadow-lg shadow-slate-300 text-sm font-bold flex items-center gap-2 hover:bg-black transition-all hover:-translate-y-0.5 active:translate-y-0"
+              onClick={handleDownloadPDF}
+              disabled={downloading}
+              className="bg-slate-900 text-white px-5 py-2 rounded-lg shadow-lg shadow-slate-300 text-sm font-bold flex items-center gap-2 hover:bg-black transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 disabled:cursor-wait"
             >
-              <Printer className="w-4 h-4" /> 打印 / 存为 PDF
+              {downloading ? (
+                <>
+                  <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  处理中...
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4" /> 下载 PDF
+                </>
+              )}
             </button>
         </div>
 
