@@ -77,6 +77,13 @@ const ProfessionalReport: React.FC<Props> = ({ data }) => {
     }
   };
 
+  // Use current date for the report header
+  const today = new Date().toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).replace(/\//g, '-');
+
   return (
     <div className="w-full flex justify-center bg-gray-100 print:bg-white print:m-0 print:p-0">
       {/* 
@@ -117,7 +124,7 @@ const ProfessionalReport: React.FC<Props> = ({ data }) => {
             </div>
           </div>
           <div className="text-right">
-            <div className="text-xs font-bold text-slate-900 font-sans">{data.meta.date}</div>
+            <div className="text-xs font-bold text-slate-900 font-sans">{today}</div>
             <div className="text-[9px] text-slate-500 uppercase tracking-wide mt-0.5">
               {data.meta.analyst || 'Felix Quantitative Team'}
             </div>
@@ -171,18 +178,16 @@ const ProfessionalReport: React.FC<Props> = ({ data }) => {
               </div>
             ))}
 
-             {/* THE VERDICT - Pushed to bottom of this column */}
-            <div className="mt-auto pt-2 shrink-0">
-                <div className="bg-slate-900 text-slate-100 p-4 rounded-sm shadow-md border-l-4 border-indigo-500 relative overflow-hidden">
-                     <div className="absolute top-0 right-0 -mt-2 -mr-2 text-slate-800 opacity-20 transform rotate-12">
-                        <svg width="50" height="50" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 16h2v2h-2zm0-6h2v4h-2z"/></svg>
-                     </div>
-
-                    <h3 className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-1.5 flex items-center gap-2">
+             {/* THE VERDICT - Moved immediately after content, removed mt-auto to avoid large gaps */}
+            <div className="pt-2 shrink-0">
+                {/* Changed to a framed box (border) instead of solid dark background */}
+                <div className="bg-white text-slate-800 p-4 rounded-sm border border-slate-300 relative overflow-hidden">
+                    <h3 className="text-[10px] font-bold text-slate-900 uppercase tracking-widest mb-1.5 flex items-center gap-2 border-b border-slate-100 pb-1">
                         分析师最终建议 Analyst Verdict
                     </h3>
-                    <p className="text-[9.5pt] font-medium font-serif leading-relaxed text-justify opacity-95">
-                        <RichText text={data.content.conclusion} mode="dark" />
+                    <p className="text-[9.5pt] font-medium font-serif leading-relaxed text-justify">
+                        {/* Use default light mode for RichText to highlight key points without dark background */}
+                        <RichText text={data.content.conclusion} />
                     </p>
                 </div>
             </div>
