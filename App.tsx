@@ -59,9 +59,16 @@ const App: React.FC = () => {
       return;
     }
 
+    // Generate filename: [Stock Name]分析策略报告_[YYYY-MM-DD].pdf
+    const dateStr = new Date().toISOString().split('T')[0];
+    const stockName = reportData?.meta.companyName || reportData?.meta.ticker || '标的';
+    // Clean stock name just in case it has illegal chars
+    const safeStockName = stockName.replace(/[\\/*?:"<>|]/g, '');
+    const filename = `${safeStockName}分析策略报告_${dateStr}.pdf`;
+
     const opt = {
       margin: 0, // We handle margins inside the component with CSS
-      filename: `IntelliQuant_Research_${reportData?.meta.ticker || 'Report'}.pdf`,
+      filename: filename,
       image: { type: 'jpeg', quality: 0.98 },
       // scrollY: 0 is CRITICAL to fix the blank page/offset issue
       html2canvas: { scale: 2, useCORS: true, logging: false, scrollY: 0 },
