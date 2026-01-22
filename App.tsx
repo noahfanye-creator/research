@@ -1,6 +1,5 @@
-
-import React, { useState, useEffect } from 'react';
-import { Sparkles, Download, FileText, ChevronRight, ArrowLeft, PenTool, AlertCircle, CheckCircle2, Printer, HelpCircle, X } from 'lucide-react';
+import React, { useState } from 'react';
+import { Sparkles, Download, FileText, ChevronRight, ArrowLeft, Printer } from 'lucide-react';
 import { ReportData } from './types';
 import { extractReportFromText } from './services/geminiService';
 import ProfessionalReport from './components/ProfessionalReport';
@@ -11,27 +10,6 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showHelp, setShowHelp] = useState(false);
-  
-  // Diagnostic state
-  const [keyStatus, setKeyStatus] = useState<'checking' | 'present' | 'missing'>('checking');
-
-  useEffect(() => {
-    // Simple check to see if we can access the key (without revealing it)
-    const checkKey = () => {
-        let hasKey = false;
-        try {
-            // @ts-ignore
-            if (import.meta.env?.VITE_API_KEY) hasKey = true;
-            // @ts-ignore
-            else if (typeof process !== 'undefined' && process.env?.API_KEY) hasKey = true;
-            // @ts-ignore
-            else if (window.process?.env?.API_KEY) hasKey = true;
-        } catch(e) {}
-        setKeyStatus(hasKey ? 'present' : 'missing');
-    };
-    checkKey();
-  }, []);
 
   const handleGenerate = async () => {
     if (!input.trim()) return;
@@ -41,7 +19,6 @@ const App: React.FC = () => {
       const data = await extractReportFromText(input);
       setReportData(data);
     } catch (err: any) {
-      // Show the specific error message from the service
       console.error(err);
       setError(err.message || "未知错误，请打开浏览器控制台(F12)查看详情。");
     } finally {
@@ -51,7 +28,6 @@ const App: React.FC = () => {
 
   const handleDownloadPDF = async () => {
     setDownloading(true);
-    // Ensure we are at the top to prevent offset bugs in html2canvas
     window.scrollTo(0, 0);
     
     const element = document.getElementById('report-content');
@@ -60,18 +36,15 @@ const App: React.FC = () => {
       return;
     }
 
-    // Generate filename: [Stock Name]分析策略报告_[YYYY-MM-DD].pdf
     const dateStr = new Date().toISOString().split('T')[0];
     const stockName = reportData?.meta.companyName || reportData?.meta.ticker || '标的';
-    // Clean stock name just in case it has illegal chars
     const safeStockName = stockName.replace(/[\\/*?:"<>|]/g, '');
     const filename = `${safeStockName}分析策略报告_${dateStr}.pdf`;
 
     const opt = {
-      margin: 0, // We handle margins inside the component with CSS
+      margin: 0, 
       filename: filename,
       image: { type: 'jpeg', quality: 0.98 },
-      // scrollY: 0 is CRITICAL to fix the blank page/offset issue
       html2canvas: { scale: 2, useCORS: true, logging: false, scrollY: 0 },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
@@ -98,7 +71,6 @@ const App: React.FC = () => {
   if (reportData) {
     return (
       <div className="min-h-screen bg-slate-200 print:bg-white font-sans">
-         {/* CSS for Print */}
         <style>{`
           @media print {
             .no-print { display: none !important; }
@@ -107,7 +79,6 @@ const App: React.FC = () => {
           }
         `}</style>
 
-        {/* Toolbar - Floating on top */}
         <div className="no-print sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm px-6 py-3 flex justify-between items-center">
            <div className="flex items-center gap-4">
              <button 
@@ -150,7 +121,6 @@ const App: React.FC = () => {
            </div>
         </div>
 
-        {/* The Report Workspace */}
         <div className="py-8 overflow-y-auto flex justify-center print:p-0 print:overflow-visible">
           <ProfessionalReport data={reportData} />
         </div>
@@ -158,7 +128,7 @@ const App: React.FC = () => {
     );
   }
 
-  // Otherwise, show the "Input Page"
+  // Input Page
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex items-center justify-center p-4 font-sans flex-col">
       <div className="w-full max-w-3xl mx-auto flex-1 flex flex-col justify-center">
@@ -186,14 +156,10 @@ const App: React.FC = () => {
             className="w-full h-64 p-8 text-slate-700 bg-white text-lg leading-relaxed resize-none outline-none font-medium placeholder:text-slate-300 rounded-2xl"
           />
           
-          <div className="bg-slate-50/80 backdrop-blur px-8 py-4 border-t border-slate-100 flex justify-between items-center rounded-b-2xl">
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
-                <PenTool className="w-3 h-3" />
-                AI Typesetting Engine
-              </div>
+          <div className="bg-slate-50/80 backdrop-blur px-8 py-4 border-t border-slate-100 flex justify-end items-center rounded-b-2xl">
               <button
                 onClick={handleGenerate}
-                disabled={loading || !input.trim() || keyStatus === 'missing'}
+                disabled={loading || !input.trim()}
                 className="bg-slate-900 text-white px-8 py-3 rounded-xl text-base font-bold hover:bg-black hover:scale-105 transition-all active:scale-95 disabled:opacity-50 disabled:scale-100 flex items-center gap-2 shadow-lg shadow-slate-300/50 disabled:cursor-not-allowed"
               >
                 {loading ? (
@@ -208,76 +174,12 @@ const App: React.FC = () => {
           </div>
         </div>
         
+        {/* Error Message */}
         {error && (
           <div className="mt-6 p-4 bg-red-50 text-red-600 text-sm font-bold rounded-xl text-center border border-red-100 animate-in fade-in slide-in-from-bottom-2 select-text">
             {error}
           </div>
         )}
-
-        <div className="mt-8 flex flex-col items-center gap-3">
-            <div 
-                className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium border cursor-pointer transition-colors ${
-                    keyStatus === 'present' 
-                        ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100' 
-                        : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
-                }`}
-                onClick={() => keyStatus === 'missing' && setShowHelp(true)}
-            >
-                {keyStatus === 'present' ? (
-                    <>
-                        <CheckCircle2 className="w-3 h-3" />
-                        System Ready (API Key Detected)
-                    </>
-                ) : (
-                    <>
-                        <AlertCircle className="w-3 h-3" />
-                        API Key Missing (Check Environment Variables)
-                        <HelpCircle className="w-3 h-3 ml-1" />
-                    </>
-                )}
-            </div>
-            
-            {showHelp && (
-                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in">
-                    <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl relative">
-                        <button onClick={() => setShowHelp(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-900">
-                            <X className="w-5 h-5" />
-                        </button>
-                        <h3 className="text-lg font-bold text-slate-900 mb-3 flex items-center gap-2">
-                           <AlertCircle className="w-5 h-5 text-amber-500" /> 如何配置 API Key?
-                        </h3>
-                        <div className="text-sm text-slate-600 space-y-3 leading-relaxed">
-                            <p>检测不到 API Key，请根据您的部署平台进行设置：</p>
-                            
-                            <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                <p className="font-bold text-slate-800 mb-1">腾讯云 EdgeOne / Webify:</p>
-                                <ol className="list-decimal pl-4 space-y-1 text-xs">
-                                    <li>进入 <strong>Project (项目)</strong> 页面 (不要在全局设置里)</li>
-                                    <li>点击 <strong>Settings (设置)</strong> 标签</li>
-                                    <li>找到 <strong>Environment Variables (环境变量)</strong></li>
-                                    <li>添加键: <code className="bg-white px-1 border rounded">VITE_API_KEY</code></li>
-                                    <li>添加值: 您的 Gemini API Key</li>
-                                    <li><strong className="text-amber-600">重要: 点击 Redeploy (重新部署) 才会生效</strong></li>
-                                </ol>
-                            </div>
-
-                            <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                <p className="font-bold text-slate-800 mb-1">Vercel / Netlify:</p>
-                                <p className="text-xs">
-                                    进入 Project Settings &gt; Environment Variables，添加 <code className="bg-white px-1 border rounded">VITE_API_KEY</code> 并重新部署。
-                                </p>
-                            </div>
-                        </div>
-                        <button 
-                            onClick={() => setShowHelp(false)}
-                            className="w-full mt-5 bg-slate-900 text-white py-2 rounded-lg font-bold hover:bg-black"
-                        >
-                            我已设置，关闭提示
-                        </button>
-                    </div>
-                 </div>
-            )}
-        </div>
       </div>
     </div>
   );

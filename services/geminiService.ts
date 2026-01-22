@@ -1,43 +1,10 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { ReportData } from "../types";
 
-// Helper function to safely retrieve the API key in various environments
-const getApiKey = (): string | undefined => {
-  // 1. Try standard process.env (Node.js or polyfilled environments)
-  try {
-    if (typeof process !== 'undefined' && process.env?.API_KEY) {
-      return process.env.API_KEY;
-    }
-  } catch (e) {
-    // Ignore reference errors if process is not defined
-  }
-
-  // 2. Try Vite's specific import.meta.env (Browser/Vite)
-  try {
-    // @ts-ignore
-    if (import.meta && import.meta.env && import.meta.env.VITE_API_KEY) {
-      // @ts-ignore
-      return import.meta.env.VITE_API_KEY;
-    }
-  } catch (e) {
-    // Ignore errors
-  }
-
-  return undefined;
-};
-
 export const extractReportFromText = async (text: string): Promise<ReportData> => {
-  const apiKey = getApiKey();
-  
-  // Debug log (remove in production if needed, but helpful for now)
-  console.log("Gemini Service: Key Status:", apiKey ? "Present (Starts with " + apiKey.substring(0, 4) + ")" : "Missing");
-
-  if (!apiKey || apiKey.trim() === '') {
-    throw new Error("API Key 未检测到。请在腾讯云/部署平台的环境变量中设置 'VITE_API_KEY'。");
-  }
-
-  const ai = new GoogleGenAI({ apiKey: apiKey });
+  // Use process.env.API_KEY directly as per guidelines.
+  // Assume it is pre-configured and available.
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   // Update prompt to enforce Chinese content with English headers/terminology
   const prompt = `
@@ -130,8 +97,13 @@ export const extractReportFromText = async (text: string): Promise<ReportData> =
     // Propagate the actual error message to the UI
     let errorMessage = error.message || error.toString();
     
+    // Catch Network/VPN issues specifically
+    if (errorMessage.includes('fetch') || errorMessage.includes('network') || errorMessage.includes('Failed to fetch')) {
+        throw new Error("网络连接失败。请确保您已开启 VPN/代理 并且可以访问 Google 服务。(中国大陆无法直接连接 Gemini API)");
+    }
+
     if (errorMessage.includes('401') || errorMessage.includes('API key')) {
-        throw new Error("API Key 无效或未授权 (401)。请检查 Key 值是否正确。");
+        throw new Error("API Key 无效或未授权 (401)。请检查 Key 是否正确。");
     }
     if (errorMessage.includes('429')) {
         throw new Error("请求太频繁 (429)。请稍后再试。");
